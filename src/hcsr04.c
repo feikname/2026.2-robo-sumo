@@ -10,17 +10,30 @@
 // prototype definitions
 #include "hcsr04.h"
 
-static void hcsr04_trigger(int trig_pin) {
+hcsr04_struct hcsr04_create(const gpio_num_t trigger_pin,
+                            const gpio_num_t echo_pin,
+                            const int timeout_duration) {
+  hcsr04_struct hcsr04 = {
+      .trigger_pin = trigger_pin,
+      .echo_pin = echo_pin,
+      .timeout_duration = timeout_duration,
+  };
+
+  return hcsr04;
+}
+
+static void hcsr04_trigger(const gpio_num_t trig_pin) {
   gpio_set_level(trig_pin, 1);
   esp_rom_delay_us(10);
   gpio_set_level(trig_pin, 0);
   esp_rom_delay_us(2);
 }
 
-static void hcsr04_wait_echo(int echo_pin, int value, int64_t timeout_duration) {
+static void hcsr04_wait_echo(const int echo_pin, const int value,
+                             const int64_t timeout_duration) {
   int64_t deadline = esp_timer_get_time() + timeout_duration;
 
-  while (gpio_get_level(ECHO_GPIO) != value) {
+  while (gpio_get_level(echo_pin) != value) {
     int64_t now = esp_timer_get_time();
     if (now >= deadline) {
       break;
@@ -28,7 +41,7 @@ static void hcsr04_wait_echo(int echo_pin, int value, int64_t timeout_duration) 
   }
 }
 
-static int hcsr04_to_cm(int64_t elapsed_us) {
+static int hcsr04_to_cm(const int64_t elapsed_us) {
   // convert from HC-SR04 echo pin microseconds to a distance in cm
   //
   // the time received is the time for the sound to go and come back.
@@ -42,14 +55,18 @@ static int hcsr04_to_cm(int64_t elapsed_us) {
   return distance_cm;
 }
 
-void hcsr04_setup(int trig_pin, int echo_pin) {
-  gpio_set_direction(trig_pin, GPIO_MODE_OUTPUT);
-  gpio_set_direction(echo_pin, GPIO_MODE_INPUT);
+void hcsr04_setup(hcsr04_struct *hcsr04) {
+  gpio_set_direction(hcsr04->trigger_pin, GPIO_MODE_OUTPUT);
+  gpio_set_direction(hcsr04->echo_pin, GPIO_MODE_INPUT);
 }
 
-int hcsr04_read_cm(int trig_pin, int echo_pin, int timeout_duration) {
+int hcsr04_read_cm(hcsr04_struct *hcsr04) {
+  const int trig_pin = hcsr04->trigger_pin;
+  const int echo_pin = hcsr04->echo_pin;
+  const int timeout_duration = hcsr04->timeout_duration;
+  ;
   hcsr04_trigger(trig_pin);
-  
+
   // we started receiving back the signal
   hcsr04_wait_echo(echo_pin, 1, timeout_duration);
 

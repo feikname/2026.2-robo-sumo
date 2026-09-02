@@ -27,8 +27,10 @@ void distance_detection_loop(Strategy strat);
 
 bool systemActive = false;
 
+hcsr04_struct hcsr04;
+
 void distance_detection_loop(Strategy strat) {
-  int distancia = hcsr04_read_cm(TRIG_GPIO, ECHO_GPIO, 25000);
+  int distancia = hcsr04_read_cm(&hcsr04);
   printf("Distância: %d cm \n", distancia);
 
   reset_distance_leds();
@@ -62,8 +64,10 @@ void distance_detection_loop(Strategy strat) {
 }
 
 void setup() {
+  hcsr04 = hcsr04_create(GPIO_NUM_23, GPIO_NUM_22, 25000);
+  hcsr04_setup(&hcsr04);
+
   setup_pushbutton();
-  hcsr04_setup(TRIG_GPIO, ECHO_GPIO);
   setup_leds_distancia();
   setup_motor();
 

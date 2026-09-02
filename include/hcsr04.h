@@ -1,12 +1,16 @@
 #ifndef HCSR04_H
 #define HCSR04_H
 
-#include "driver/gpio.h"
+typedef struct {
+  gpio_num_t trigger_pin;
+  gpio_num_t echo_pin;
+  int timeout_duration;
+} hcsr04_struct;
 
-#define TRIG_GPIO 23
-#define ECHO_GPIO 22
-
-void hcsr04_setup(int trig_pin, int echo_pin);
-int hcsr04_read_cm(int trig_pin, int echo_pin, int timeout);
+hcsr04_struct hcsr04_create(const gpio_num_t trigger_pin,
+                            const gpio_num_t echo_pin,
+                            const int timeout_duration);
+void hcsr04_setup(hcsr04_struct *hcsr04);
+int hcsr04_read_cm(hcsr04_struct *hcsr04);
 
 #endif
