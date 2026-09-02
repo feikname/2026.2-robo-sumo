@@ -6,7 +6,7 @@
 #define TRIG_GPIO 23
 #define ECHO_GPIO 22
 
-void setup_hc_sr04(int trig_pin, int echo_pin);
-int ler_HC_SR04(int trig_pin, int echo_pin);
+void hcsr04_setup(int trig_pin, int echo_pin);
+int hcsr04_read_cm(int trig_pin, int echo_pin, int timeout);
 
 #endif
