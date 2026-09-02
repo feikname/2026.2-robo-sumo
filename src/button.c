@@ -27,11 +27,10 @@ void pushbutton_waitpress() {
   }
 }
 
-void wait_system_start(bool *systemActive) {
+void wait_system_start() {
   pushbutton_waitpress();
 
   printf("Starting system in 5 seconds...\n");
   vTaskDelay(pdMS_TO_TICKS(5000));
-  *systemActive = true;
   printf("on\n");
 }

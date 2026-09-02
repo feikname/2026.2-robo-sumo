@@ -23,61 +23,43 @@ void setup();
 void loop();
 void app_main();
 
-void distance_detection_loop(Strategy strat);
-
-bool systemActive = false;
-
 hcsr04_struct hcsr04;
 
-void distance_detection_loop(Strategy strat) {
-  int distancia = hcsr04_read_cm(&hcsr04);
-  printf("Distância: %d cm \n", distancia);
+void setup() {
+  // Distance detection subsystem
+  hcsr04 = hcsr04_create(GPIO_NUM_23, GPIO_NUM_22, 25000);
+  hcsr04_setup(&hcsr04);
+  setup_distance_leds();
 
-  reset_distance_leds();
+  // (Simulated) Motor/movement subsystem
+  setup_motor();
 
-  switch (getDistanceRange(distancia)) {
-  case VERY_NEAR:
-    gpio_set_level(LED_VERMELHO_10, 1);
+  // TODO: Edge detection subsystem
 
+  // Activation subsystem
+  setup_pushbutton();
+  wait_system_start();
+
+  // Actually start it
+  initial_start(strat);
+}
+
+void loop() {
+  int distance = hcsr04_read_cm(&hcsr04);
+  printf("Distância: %d cm \n", distance);
+
+  DistanceRange dr = to_dist_range(distance);
+  distance_leds_update(dr);
+
+  if (dr == DISTANCE_VERY_NEAR) {
     gpio_set_level(LED_FRENTE, 0);
     vTaskDelay(pdMS_TO_TICKS(500));
 
     printf("exec_manobra\n");
     exec_manobra();
-    break;
-
-  case NEAR:
+  } else {
     gpio_set_level(LED_FRENTE, 1);
-    gpio_set_level(LED_AZUL_30, 1);
-    break;
-
-  case MEDIUM:
-    gpio_set_level(LED_FRENTE, 1);
-    gpio_set_level(LED_AMARELO_60, 1);
-    break;
-
-  case FAR:
-    gpio_set_level(LED_FRENTE, 1);
-    gpio_set_level(LED_AZUL_90, 1);
-    break;
   }
-}
-
-void setup() {
-  hcsr04 = hcsr04_create(GPIO_NUM_23, GPIO_NUM_22, 25000);
-  hcsr04_setup(&hcsr04);
-
-  setup_pushbutton();
-  setup_leds_distancia();
-  setup_motor();
-
-  wait_system_start(&systemActive);
-
-  initial_start(strat);
-}
-
-void loop() {
-  distance_detection_loop(strat);
 
   vTaskDelay(pdMS_TO_TICKS(250));
 }

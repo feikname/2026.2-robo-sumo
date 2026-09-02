@@ -8,6 +8,6 @@
 void setup_pushbutton();
 int pushbutton_is_pressed();
 void pushbutton_waitpress();
-void wait_system_start(bool *systemActive);
+void wait_system_start();
 
 #endif

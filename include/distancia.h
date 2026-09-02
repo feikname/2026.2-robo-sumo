@@ -3,15 +3,16 @@
 
 #include "driver/gpio.h"
 
-#define LED_VERMELHO_10 GPIO_NUM_19
-#define LED_AZUL_30 GPIO_NUM_18
-#define LED_AMARELO_60 GPIO_NUM_5
-#define LED_AZUL_90 GPIO_NUM_17
+#define LED_VERY_NEAR GPIO_NUM_19
+#define LED_NEAR GPIO_NUM_18
+#define LED_MEDIUM GPIO_NUM_5
+#define LED_FAR GPIO_NUM_17
 
-typedef enum { VERY_NEAR, NEAR, MEDIUM, FAR } DistanceRange;
+typedef enum { DISTANCE_VERY_NEAR, DISTANCE_NEAR, DISTANCE_MEDIUM, DISTANCE_FAR } DistanceRange;
 
-DistanceRange getDistanceRange(int distance);
-void setup_leds_distancia();
+DistanceRange to_dist_range(const int distance);
+void setup_distance_leds();
 void reset_distance_leds();
+void distance_leds_update(DistanceRange dr);
 
 #endif
