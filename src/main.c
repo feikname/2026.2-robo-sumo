@@ -1,9 +1,16 @@
+// gpio_set_direction, gpio_set_level
 #include "driver/gpio.h"
-#include "esp_timer.h"
+
+// pdMS_TO_TICKS
 #include "freertos/FreeRTOS.h"
+
+// vTaskDelay
 #include "freertos/task.h"
+
+// printf
 #include "stdio.h"
 
+// system components
 #include "button.h"
 #include "hcsr04.h"
 
@@ -17,7 +24,6 @@ void loop();
 void app_main();
 
 void distance_detection_loop(Strategy strat);
-void exec_manobra();
 
 bool systemActive = false;
 

@@ -1,5 +1,8 @@
-#include "distancia.h"
+// gpio_set_direction, gpio_set_level
 #include "driver/gpio.h"
+
+// prototype definitions
+#include "distancia.h"
 
 DistanceRange getDistanceRange(int distance) {
   if (distance <= 10) {

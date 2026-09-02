@@ -1,8 +1,13 @@
-#include "driver/gpio.h"
+// esp_timer_get_time
 #include "esp_timer.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 
+// esp_rom_delay_us
+#include "esp_rom_sys.h"
+
+// gpio_set_direction, gpio_set_level
+#include "driver/gpio.h"
+
+// prototype definitions
 #include "hcsr04.h"
 
 void setup_hc_sr04(int trig_pin, int echo_pin) {
@@ -24,21 +29,15 @@ int ler_HC_SR04(int trig_pin, int echo_pin) {
     }
   }
 
-  double inicio_tempo_echo_alto = esp_timer_get_time();
-
-  while (gpio_get_level(echo_pin) == 1) {
+  int64_t inicio_tempo_echo_alto = esp_timer_get_time();
+  while (gpio_get_level(echo_pin) != 0) {
+    // wait for it to go down again
   }
-  double fim_tempo_echo_alto = esp_timer_get_time();
+  int64_t fim_tempo_echo_alto = esp_timer_get_time();
 
-  // Converter para segundos
-  fim_tempo_echo_alto = (double)fim_tempo_echo_alto / 1000000.0;
+  int64_t duracao_us = fim_tempo_echo_alto - inicio_tempo_echo_alto;
 
-  // Converter para segundos
-  inicio_tempo_echo_alto = (double)inicio_tempo_echo_alto / 1000000.0;
+  int distancia_cm = (int)(duracao_us * 0.0343 / 2);
 
-  // A velocidade do som é aprox 343m/s
-  int distanciaCm =
-      (int)(((fim_tempo_echo_alto - inicio_tempo_echo_alto) * 34300) / 2);
-
-  return distanciaCm;
+  return distancia_cm;
 }

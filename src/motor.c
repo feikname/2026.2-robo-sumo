@@ -1,8 +1,13 @@
+// gpio_set_direction, gpio_set_level
 #include "driver/gpio.h"
-#include "esp_timer.h"
+
+// pdMS_TO_TICKS
 #include "freertos/FreeRTOS.h"
+
+// vTaskDelay
 #include "freertos/task.h"
 
+// prototype definitions
 #include "motor.h"
 
 void setup_motor() {
