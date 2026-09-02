@@ -1,34 +1,38 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-#include "driver/gpio.h"
-
+// TODO remove me
+// hardcoded LEDs for wokwi
 #define LED_DIREITA GPIO_NUM_16
 #define LED_ESQUERDA GPIO_NUM_32
 #define LED_TRAS GPIO_NUM_27
 #define LED_FRENTE GPIO_NUM_13
 
 typedef enum {
-  Default,
-  Aggressive,
-  Defensive,
-  Random // Giro, Avanço, Recuo
+  STRATEGY_DEFAULT,
+  STRATEGY_AGGRESIVE,
+  STRATEGY_DEFENSIVE,
+  STRATEGY_RANDOM // Giro, Avanço, Recuo
 } Strategy;
 
 typedef enum {
-  FRONT,
-  SUPERIOR_LEFT,
-  LEFT,
-  INFERIOR_LEFT,
-  BACK,
-  INFERIOR_RIGHT,
-  RIGHT,
-  SUPERIOR_RIGHT,
+  MANEUEVER_EVASION,
+} Maneuver;
+
+typedef enum {
+  DIRECTION_FRONT,
+  DIRECTION_FRONT_LEFT,
+  DIRECTION_LEFT,
+  DIRECTION_REAR_LEFT,
+  DIRECTION_REAR,
+  DIRECTION_REAR_RIGHT,
+  DIRECTION_RIGHT,
+  DIRECTION_FRONT_RIGHT,
 } Direction;
 
-void setup_motor();
-void ir_duracao(Direction direcao, int duracao);
-void exec_manobra();
-void initial_start(Strategy strat);
+void motors_setup();
+void do_movement(Direction dir, int duration);
+void do_maneuver(Maneuver m);
+void do_evasion_maneuveur();
 
 #endif

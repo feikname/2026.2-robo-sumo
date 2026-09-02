@@ -13,11 +13,10 @@
 // system components
 #include "button.h"
 #include "hcsr04.h"
-
 #include "distancia.h"
 #include "motor.h"
 
-Strategy strat = Default;
+Strategy strat = STRATEGY_DEFAULT;
 
 void setup();
 void loop();
@@ -32,16 +31,13 @@ void setup() {
   setup_distance_leds();
 
   // (Simulated) Motor/movement subsystem
-  setup_motor();
+  motors_setup();
 
   // TODO: Edge detection subsystem
 
   // Activation subsystem
   setup_pushbutton();
   wait_system_start();
-
-  // Actually start it
-  initial_start(strat);
 }
 
 void loop() {
@@ -55,8 +51,8 @@ void loop() {
     gpio_set_level(LED_FRENTE, 0);
     vTaskDelay(pdMS_TO_TICKS(500));
 
-    printf("exec_manobra\n");
-    exec_manobra();
+    printf("manobra_desvio\n");
+    do_evasion_maneuveur();
   } else {
     gpio_set_level(LED_FRENTE, 1);
   }

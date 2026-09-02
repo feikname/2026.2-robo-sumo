@@ -10,22 +10,22 @@
 // prototype definitions
 #include "motor.h"
 
-void setup_motor() {
+void motors_setup() {
   gpio_set_direction(LED_DIREITA, GPIO_MODE_OUTPUT);
   gpio_set_direction(LED_ESQUERDA, GPIO_MODE_OUTPUT);
   gpio_set_direction(LED_TRAS, GPIO_MODE_OUTPUT);
   gpio_set_direction(LED_FRENTE, GPIO_MODE_OUTPUT);
 }
 
-void ir_duracao(Direction direcao, int duracao) {
-  switch (direcao) {
-  case FRONT:
+void do_movement(Direction direction, int duracao) {
+  switch (direction) {
+  case DIRECTION_FRONT:
     gpio_set_level(LED_FRENTE, 1);
     vTaskDelay(pdMS_TO_TICKS(duracao));
     gpio_set_level(LED_FRENTE, 0);
     break;
 
-  case SUPERIOR_LEFT:
+  case DIRECTION_FRONT_LEFT:
     gpio_set_level(LED_FRENTE, 1);
     gpio_set_level(LED_ESQUERDA, 1);
     vTaskDelay(pdMS_TO_TICKS(duracao));
@@ -33,13 +33,13 @@ void ir_duracao(Direction direcao, int duracao) {
     gpio_set_level(LED_ESQUERDA, 0);
     break;
 
-  case LEFT:
+  case DIRECTION_LEFT:
     gpio_set_level(LED_ESQUERDA, 1);
     vTaskDelay(pdMS_TO_TICKS(duracao));
     gpio_set_level(LED_ESQUERDA, 0);
     break;
 
-  case INFERIOR_LEFT:
+  case DIRECTION_REAR_LEFT:
     gpio_set_level(LED_TRAS, 1);
     gpio_set_level(LED_ESQUERDA, 1);
     vTaskDelay(pdMS_TO_TICKS(duracao));
@@ -47,13 +47,13 @@ void ir_duracao(Direction direcao, int duracao) {
     gpio_set_level(LED_ESQUERDA, 0);
     break;
 
-  case BACK:
+  case DIRECTION_REAR:
     gpio_set_level(LED_TRAS, 1);
     vTaskDelay(pdMS_TO_TICKS(duracao));
     gpio_set_level(LED_TRAS, 0);
     break;
 
-  case INFERIOR_RIGHT:
+  case DIRECTION_REAR_RIGHT:
     gpio_set_level(LED_TRAS, 1);
     gpio_set_level(LED_DIREITA, 1);
     vTaskDelay(pdMS_TO_TICKS(duracao));
@@ -61,13 +61,13 @@ void ir_duracao(Direction direcao, int duracao) {
     gpio_set_level(LED_DIREITA, 0);
     break;
 
-  case RIGHT:
+  case DIRECTION_RIGHT:
     gpio_set_level(LED_DIREITA, 1);
     vTaskDelay(pdMS_TO_TICKS(duracao));
     gpio_set_level(LED_DIREITA, 0);
     break;
 
-  case SUPERIOR_RIGHT:
+  case DIRECTION_FRONT_RIGHT:
     gpio_set_level(LED_FRENTE, 1);
     gpio_set_level(LED_DIREITA, 1);
     vTaskDelay(pdMS_TO_TICKS(duracao));
@@ -77,30 +77,15 @@ void ir_duracao(Direction direcao, int duracao) {
   }
 }
 
-void exec_manobra() {
-  ir_duracao(BACK, 1000);
-  vTaskDelay(pdMS_TO_TICKS(500));
-  ir_duracao(LEFT, 1000);
+void do_maneuver(Maneuver m) {
+  if (m == MANEUEVER_EVASION) {
+    do_evasion_maneuveur();
+  }
 }
 
-void initial_start(Strategy strat) {
-  switch (strat) {
-  case Default:
-    ir_duracao(BACK, 200);
-    break;
+void do_evasion_maneuveur() {
+  do_movement(DIRECTION_REAR, 500);
 
-  case Aggressive:
-    ir_duracao(FRONT, 200);
-    ir_duracao(RIGHT, 100);
-    // acelera em direção ao centro
-    ir_duracao(SUPERIOR_LEFT, 200);
-    ir_duracao(FRONT, 200);
-    break;
-
-  case Defensive:
-    break;
-
-  case Random:
-    break;
-  }
+  // tanto faz se direita ou esquerda
+  do_movement(DIRECTION_LEFT, 1000);
 }
