@@ -190,6 +190,7 @@ void do_maneuver(Maneuver m, motor_set *ms) {
 }
 
 void do_maneuver_and_restore_state(Maneuver m, motor_set *ms) {
+  // this doesn't quite work. need to debug.
   motor_set original_ms = *ms;
   if (m == MANEUEVER_EVASION) {
     do_evasion_maneuver(ms);
@@ -198,8 +199,8 @@ void do_maneuver_and_restore_state(Maneuver m, motor_set *ms) {
 }
 
 static void do_evasion_maneuver(motor_set *ms) {
-  do_movement(DIRECTION_BACKWARD, SPEED_FAST, 1000, ms);
+  do_movement(DIRECTION_BACKWARD, SPEED_FAST, 500, ms);
 
   // tanto faz se direita ou esquerda
-  do_movement(DIRECTION_STEER_LEFT, SPEED_FAST, 1000, ms);
+  do_movement(DIRECTION_STEER_LEFT, SPEED_FAST, 150, ms);
 }

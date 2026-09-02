@@ -53,7 +53,9 @@ void loop() {
   distance_leds_update(od);
 
   if (od == OBSTACLE_IS_VERY_CLOSE) {
-    do_maneuver_and_restore_state(MANEUEVER_EVASION, &motors);
+    do_maneuver(MANEUEVER_EVASION, &motors);
+  } else {
+    set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
   }
 
   vTaskDelay(pdMS_TO_TICKS(250));
