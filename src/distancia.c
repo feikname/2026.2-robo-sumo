@@ -11,8 +11,10 @@ DistanceRange get_dist_range1(const int distance) {
     return DISTANCE_NEAR;
   } else if (distance <= 60) {
     return DISTANCE_MEDIUM;
-  } else {
+  } else if (distance <= 90) {
     return DISTANCE_FAR;
+  } else {
+    return DISTANCE_VERY_FAR;
   }
 }
 
@@ -24,13 +26,15 @@ DistanceRange get_dist_range2(const int distance) {
     return DISTANCE_NEAR;
   } else if (distance <= 300) {
     return DISTANCE_MEDIUM;
-  } else {
+  } else if (distance <= 380) {
     return DISTANCE_FAR;
+  } else {
+    return DISTANCE_VERY_FAR;
   }
 }
 
 DistanceRange to_dist_range(const int distance) {
-  return get_dist_range2(distance);
+  return get_dist_range1(distance);
 }
 
 void reset_distance_leds() {
