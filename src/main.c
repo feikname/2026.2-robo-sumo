@@ -23,6 +23,7 @@ void loop();
 void app_main();
 
 hcsr04_struct hcsr04;
+motor_set motors;
 
 void setup() {
   // Distance detection subsystem
@@ -31,6 +32,7 @@ void setup() {
   setup_distance_leds();
 
   // (Simulated) Motor/movement subsystem
+  motors = motors_create();
   motors_setup();
 
   // TODO: Edge detection subsystem
@@ -38,6 +40,9 @@ void setup() {
   // Activation subsystem
   setup_pushbutton();
   wait_system_start();
+
+  // Default strategy: go forward
+  set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
 }
 
 void loop() {
@@ -48,13 +53,7 @@ void loop() {
   distance_leds_update(dr);
 
   if (dr == DISTANCE_VERY_NEAR) {
-    gpio_set_level(LED_FRENTE, 0);
-    vTaskDelay(pdMS_TO_TICKS(500));
-
-    printf("manobra_desvio\n");
-    do_evasion_maneuveur();
-  } else {
-    gpio_set_level(LED_FRENTE, 1);
+    do_maneuver_and_restore_state(MANEUEVER_EVASION, &motors);
   }
 
   vTaskDelay(pdMS_TO_TICKS(250));
