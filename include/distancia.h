@@ -8,11 +8,11 @@
 #define LED_MEDIUM GPIO_NUM_5
 #define LED_FAR GPIO_NUM_17
 
-typedef enum { DISTANCE_VERY_NEAR, DISTANCE_NEAR, DISTANCE_MEDIUM, DISTANCE_FAR, DISTANCE_VERY_FAR } DistanceRange;
+typedef enum { OBSTACLE_IS_VERY_CLOSE, OBSTACLE_IS_CLOSE, OBSTACLE_IN_MEDIUM_DISTANCE, OBSTACLE_IS_FAR, OBSTACLE_NOT_PRESENT } ObstacleDistance;
 
-DistanceRange to_dist_range(const int distance);
+ObstacleDistance to_dist_range(const int distance);
 void setup_distance_leds();
 void reset_distance_leds();
-void distance_leds_update(DistanceRange dr);
+void distance_leds_update(ObstacleDistance od);
 
 #endif

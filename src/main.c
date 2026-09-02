@@ -49,10 +49,10 @@ void loop() {
   int distance = hcsr04_read_cm(&hcsr04);
   printf("Distância: %d cm \n", distance);
 
-  DistanceRange dr = to_dist_range(distance);
-  distance_leds_update(dr);
+  ObstacleDistance od = to_dist_range(distance);
+  distance_leds_update(od);
 
-  if (dr == DISTANCE_VERY_NEAR) {
+  if (od == OBSTACLE_IS_VERY_CLOSE) {
     do_maneuver_and_restore_state(MANEUEVER_EVASION, &motors);
   }
 
