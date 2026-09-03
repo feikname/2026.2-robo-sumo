@@ -1,8 +1,10 @@
+#ifndef LDR_H
 
+#define LDR_H
 
-#define FRONT GPIO_NUM_4
-#define BACK  GPIO_NUM_25
+#include "driver/gpio.h"
 
+bool border_found(gpio_num_t pin);
+void ldr_setup(gpio_num_t pin);
 
-
-void ldr_setup();
+#endif
