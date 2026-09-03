@@ -15,6 +15,10 @@
 #include "hcsr04.h"
 #include "distancia.h"
 #include "motor.h"
+#include "ldr.h"
+
+#define LDR_FRENTE GPIO_NUM_25
+#define LDR_TRAS GPIO_NUM_4
 
 Strategy strat = STRATEGY_DEFAULT;
 
@@ -35,7 +39,9 @@ void setup() {
   motors = motors_create();
   motors_setup();
 
-  // TODO: Edge detection subsystem
+  // LDR setup
+  ldr_setup(LDR_TRAS);
+  ldr_setup(LDR_FRENTE);
 
   // Activation subsystem
   setup_pushbutton();
@@ -48,6 +54,10 @@ void setup() {
 void loop() {
   int distance = hcsr04_read_cm(&hcsr04);
   printf("Distância: %d cm \n", distance);
+
+  bool ldr_tras = border_found(LDR_TRAS);
+  bool ldr_frente = border_found(LDR_FRENTE);
+  printf("LDR frente -> %d\nLDR tras -> %d\n", ldr_frente, ldr_tras);
 
   ObstacleDistance od = to_dist_range(distance);
   distance_leds_update(od);
