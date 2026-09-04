@@ -30,6 +30,9 @@ typedef enum {
 
 typedef enum {
   MANEUEVER_EVASION,
+  MANEUEVER_FRONT_LDR,
+  MANEUEVER_BACK_LDR,
+  MANEUVER_STOP,
 } Maneuver;
 
 typedef enum {
@@ -53,5 +56,8 @@ void set_motor_movement(Direction dir, Speed speed, motor_set *ms);
 void do_movement(Direction dir, Speed speed, int duration, motor_set *ms);
 void do_maneuver(Maneuver m, motor_set *ms);
 void do_maneuver_and_restore_state(Maneuver m, motor_set *ms);
+void do_maneuver_ldr_front_detected(motor_set *ms);
+void do_maneuver_ldr_back_detected(motor_set *ms);
+void do_maneuver_stop(motor_set *ms);
 
 #endif

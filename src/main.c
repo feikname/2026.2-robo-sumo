@@ -64,6 +64,10 @@ void loop() {
 
   if (od == OBSTACLE_IS_VERY_CLOSE) {
     do_maneuver(MANEUEVER_EVASION, &motors);
+  } else if ( ldr_tras ) {
+    do_maneuver(MANEUEVER_BACK_LDR, &motors);
+  } else if ( ldr_frente ) {
+    do_maneuver(MANEUEVER_FRONT_LDR, &motors);
   } else {
     set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
   }

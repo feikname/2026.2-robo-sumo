@@ -186,7 +186,23 @@ void do_movement(Direction dir, Speed speed, int duration, motor_set *ms) {
 void do_maneuver(Maneuver m, motor_set *ms) {
   if (m == MANEUEVER_EVASION) {
     do_evasion_maneuver(ms);
+  }else if( m == MANEUEVER_FRONT_LDR ){
+    do_maneuver_ldr_front_detected(ms);
+  }else if ( m == MANEUEVER_BACK_LDR ){
+    do_maneuver_ldr_back_detected(ms);
+  }else if ( m == MANEUVER_STOP ){
+    do_maneuver_stop(ms);
   }
+}
+
+void do_maneuver_ldr_front_detected(motor_set *ms){
+  do_movement(DIRECTION_BACKWARD,SPEED_FAST,1000,ms);
+  do_movement(DIRECTION_SPIN_CLOCKWISE,SPEED_FAST,1000,ms);
+}
+
+void do_maneuver_ldr_back_detected(motor_set *ms){
+  do_movement(DIRECTION_FORWARD,SPEED_FAST,1000,ms);
+  do_movement(DIRECTION_SPIN_CLOCKWISE,SPEED_FAST,1000,ms);
 }
 
 void do_maneuver_and_restore_state(Maneuver m, motor_set *ms) {
@@ -196,6 +212,10 @@ void do_maneuver_and_restore_state(Maneuver m, motor_set *ms) {
     do_evasion_maneuver(ms);
   }
   *ms = original_ms;
+}
+void do_maneuver_stop(motor_set *ms) {
+  ms->left_motor = MOTOR_INACTIVE;
+  ms->right_motor = MOTOR_INACTIVE;
 }
 
 static void do_evasion_maneuver(motor_set *ms) {
