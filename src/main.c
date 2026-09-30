@@ -10,6 +10,9 @@
 // printf
 #include "stdio.h"
 
+// random
+#include "esp_random.h"
+
 // system components
 #include "button.h"
 #include "hcsr04.h"
@@ -69,7 +72,18 @@ void loop() {
   } else if ( ldr_frente ) {
     do_maneuver(MANEUEVER_FRONT_LDR, &motors);
   } else {
-    set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
+
+    // Generates 1 or 2
+    int val = (esp_random() % 2) + 1;
+
+    if ( val == 1 ){
+      // passive
+      do_movement(DIRECTION_BACKWARD,SPEED_SLOW,1000,&motors);
+      set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
+    } else if ( val == 2) {
+      // aggresive
+      set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
+    }
   }
 
   vTaskDelay(pdMS_TO_TICKS(250));
