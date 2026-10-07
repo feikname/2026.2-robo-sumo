@@ -47,8 +47,8 @@ void setup() {
   ldr_setup(LDR_FRENTE);
 
   // Activation subsystem
-  setup_pushbutton();
-  wait_system_start();
+  // setup_pushbutton();
+  // wait_system_start();
 
   // Default strategy: go forward
   set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
