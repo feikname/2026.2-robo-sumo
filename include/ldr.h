@@ -2,7 +2,7 @@
 
 #define LDR_H
 
-#include "driver/gpio.h"
+#include "hal/gpio_types.h"
 
 bool border_found(gpio_num_t pin);
 void ldr_setup(gpio_num_t pin);
