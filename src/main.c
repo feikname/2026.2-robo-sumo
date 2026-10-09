@@ -7,37 +7,91 @@
 // vTaskDelay
 #include "freertos/task.h"
 
-// L298N
-#define IN1 GPIO_NUM_32
-#define IN2 GPIO_NUM_33
+// printf
+#include "stdio.h"
+
+// random
+#include "esp_random.h"
+
+// system components
+#include "button.h"
+#include "hcsr04.h"
+#include "distancia.h"
+#include "motor.h"
+#include "ldr.h"
+
+#define LDR_FRENTE GPIO_NUM_25
+#define LDR_TRAS GPIO_NUM_4
+
+Strategy strat = STRATEGY_DEFAULT;
+
+void setup();
+void loop();
+void app_main();
+
+hcsr04_struct hcsr04;
+motor_set motors;
 
 void setup() {
-    gpio_reset_pin(IN1);
-    gpio_reset_pin(IN2);
-    gpio_set_direction(IN1, GPIO_MODE_OUTPUT);
-    gpio_set_direction(IN2, GPIO_MODE_OUTPUT);
+  // Distance detection subsystem
+  hcsr04 = hcsr04_create(GPIO_NUM_23, GPIO_NUM_22, 25000);
+  hcsr04_setup(&hcsr04);
+  setup_distance_leds();
+
+  // (Simulated) Motor/movement subsystem
+  motors = motors_create();
+  motors_setup();
+
+  // LDR setup
+  ldr_setup(LDR_TRAS);
+  ldr_setup(LDR_FRENTE);
+
+  // Activation subsystem
+  // setup_pushbutton();
+  // wait_system_start();
+
+  // Default strategy: go forward
+  set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
 }
 
 void loop() {
-    // 1. Forward for 1 second
-    gpio_set_level(IN1, 1);
-    gpio_set_level(IN2, 0);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+  int distance = hcsr04_read_cm(&hcsr04);
+  printf("Distância: %d cm \n", distance);
 
-    // 2. Reverse for 1 second
-    gpio_set_level(IN1, 0);
-    gpio_set_level(IN2, 1);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+  bool ldr_tras = border_found(LDR_TRAS);
+  bool ldr_frente = border_found(LDR_FRENTE);
+  printf("LDR frente -> %d\nLDR tras -> %d\n", ldr_frente, ldr_tras);
 
-    // 3. Stop for 1 second
-    gpio_set_level(IN1, 0);
-    gpio_set_level(IN2, 0);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+  ObstacleDistance od = to_dist_range(distance);
+  distance_leds_update(od);
+
+  if (od == OBSTACLE_IS_VERY_CLOSE) {
+    do_maneuver(MANEUEVER_EVASION, &motors);
+  } else if ( ldr_tras ) {
+    do_maneuver(MANEUEVER_BACK_LDR, &motors);
+  } else if ( ldr_frente ) {
+    do_maneuver(MANEUEVER_FRONT_LDR, &motors);
+  } else {
+
+    // Generates 1 or 2
+    int val = (esp_random() % 2) + 1;
+
+    if ( val == 1 ){
+      // passive
+      do_movement(DIRECTION_BACKWARD,SPEED_SLOW,1000,&motors);
+      set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
+    } else if ( val == 2) {
+      // aggresive
+      set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
+    }
+  }
+
+  vTaskDelay(pdMS_TO_TICKS(250));
 }
 
 void app_main() {
-    setup();
-    while (true) {
-        loop();
-    }
+  setup();
+  while (true) {
+    loop();
+  }
 }
