@@ -33,8 +33,8 @@ ldr_struct ldr;
 #define ECHO GPIO_NUM_22
 
 // H-Bridge (Motor 1) [missing speed control]
-#define IN1 GPIO_NUM_32
-#define IN2 GPIO_NUM_33
+#define IN1 GPIO_NUM_33
+#define IN2 GPIO_NUM_32
 
 // H-Bridge (Motor 2) [missing speed control]
 #define IN3 GPIO_NUM_26
