@@ -28,23 +28,38 @@ void app_main();
 
 hcsr04_struct hcsr04;
 motor_set motors;
+ldr_struct ldr;
+
+// HC-SR04 (distance)
+#define TRIG GPIO_NUM_23
+#define ECHO GPIO_NUM_22
+
+// H-Bridge (Motor 1) [missing speed control]
+#define IN1 GPIO_NUM_32
+#define IN2 GPIO_NUM_33
+
+// H-Bridge (Motor 2) [missing speed control]
+#define IN3 GPIO_NUM_26
+#define IN4 GPIO_NUM_27
+
+// LDR (arena edge)
+#define LDR GPIO_NUM_21
 
 void setup() {
   // Distance detection subsystem
-  hcsr04 = hcsr04_create(GPIO_NUM_23, GPIO_NUM_22, 25000);
+  hcsr04 = hcsr04_create(TRIG, GPIO_NUM_22, 25000);
   hcsr04_setup(&hcsr04);
 
-  // (Simulated) Motor/movement subsystem
-  motors = motors_create();
-  motors_setup();
-
   // LDR setup
-  ldr_setup(LDR_TRAS);
-  ldr_setup(LDR_FRENTE);
+  ldr_setup(&ldr);
 
   // Activation subsystem
   // setup_pushbutton();
   // wait_system_start();
+
+  // (Simulated) Motor/movement subsystem
+  motors = motors_create();
+  motors_setup();
 
   // Default strategy: go forward
   set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
@@ -52,34 +67,9 @@ void setup() {
 
 void loop() {
   int distance = hcsr04_read_cm(&hcsr04);
-  printf("Distância: %d cm \n", distance);
-
-  bool ldr_tras = border_found(LDR_TRAS);
-  bool ldr_frente = border_found(LDR_FRENTE);
-  printf("LDR frente -> %d\nLDR tras -> %d\n", ldr_frente, ldr_tras);
+  bool border_found = ldr_read(&ldr);
 
   ObstacleDistance od = to_dist_range(distance);
-
-  if (od == OBSTACLE_IS_VERY_CLOSE) {
-    do_maneuver(MANEUEVER_EVASION, &motors);
-  } else if ( ldr_tras ) {
-    do_maneuver(MANEUEVER_BACK_LDR, &motors);
-  } else if ( ldr_frente ) {
-    do_maneuver(MANEUEVER_FRONT_LDR, &motors);
-  } else {
-
-    // Generates 1 or 2
-    int val = (esp_random() % 2) + 1;
-
-    if ( val == 1 ){
-      // passive
-      do_movement(DIRECTION_BACKWARD,SPEED_SLOW,1000,&motors);
-      set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
-    } else if ( val == 2) {
-      // aggresive
-      set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
-    }
-  }
 
   vTaskDelay(pdMS_TO_TICKS(250));
 }

@@ -1,14 +1,15 @@
 #ifndef LDR_H
-
 #define LDR_H
 
-// gpio_num_t, GPIO_NUM_\d+
+// gpio_num_t
 #include "hal/gpio_types.h"
 
-#define LDR_FRENTE GPIO_NUM_25
-#define LDR_TRAS GPIO_NUM_4
+typedef struct {
+  gpio_num_t pin;
+} ldr_struct;
 
-bool border_found(gpio_num_t pin);
-void ldr_setup(gpio_num_t pin);
+ldr_struct ldr_create(const gpio_num_t pin);
+void ldr_setup(ldr_struct *ldr);
+int ldr_read(ldr_struct *ldr);
 
 #endif
