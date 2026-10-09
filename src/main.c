@@ -20,9 +20,6 @@
 #include "motor.h"
 #include "ldr.h"
 
-#define LDR_FRENTE GPIO_NUM_25
-#define LDR_TRAS GPIO_NUM_4
-
 Strategy strat = STRATEGY_DEFAULT;
 
 void setup();
