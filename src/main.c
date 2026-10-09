@@ -45,8 +45,8 @@ ldr_struct ldr;
 
 void setup() {
   // Distance detection subsystem
-  // hcsr04 = hcsr04_create(TRIG, GPIO_NUM_22, 25000);
-  // hcsr04_setup(&hcsr04);
+  hcsr04 = hcsr04_create(TRIG, GPIO_NUM_22, 25000);
+  hcsr04_setup(&hcsr04);
 
   // // LDR setup
   // ldr = ldr_create(LDR);
@@ -61,19 +61,22 @@ void setup() {
   motors_setup(&motors);
 
   // Default strategy: go forward
-  // set_motor_movement(&ms, SPEED_FAST, &motors);
+  // set_movement(&motors, MOVE_FORWARD);
 }
 
 void loop() {
-  // int distance = hcsr04_read_cm(&hcsr04);
+  int distance = hcsr04_read_cm(&hcsr04);
   // bool border_found = ldr_read(&ldr);
 
-  // ObstacleDistance od = to_dist_range(distance);
+  ObstacleDistance od = to_dist_range(distance);
 
-  do_movement(&motors, MOVE_FORWARD, 1000);
-  do_movement(&motors, MOVE_STATIONARY, 1000);
-  do_movement(&motors, MOVE_BACKWARD, 1000);
-  do_movement(&motors, MOVE_STATIONARY, 1000);
+  printf("Distância:%d\n", hcsr04_read_cm(&hcsr04));
+  vTaskDelay(pdMS_TO_TICKS(1000));
+
+  // do_movement_for(&motors, MOVE_FORWARD, 1000);
+  // do_movement_for(&motors, MOVE_STATIONARY, 1000);
+  // do_movement_for(&motors, MOVE_BACKWARD, 1000);
+  // do_movement_for(&motors, MOVE_STATIONARY, 1000);
 }
 
 void app_main() {

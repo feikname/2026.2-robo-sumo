@@ -70,8 +70,7 @@ void motors_stop_all(motor_set *ms) {
   motor_stop(&ms->right);
 }
 
-void do_movement(motor_set *ms, movement m, int duration) {
-
+void set_movement(motor_set *ms, movement m) {
   switch (m) {
   case MOVE_FORWARD:
     motor_set_movement(&ms->left, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_FAST);
@@ -101,6 +100,9 @@ void do_movement(motor_set *ms, movement m, int duration) {
     motor_set_movement(&ms->right, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_FAST);
     break;
   }
+}
 
+void do_movement_for(motor_set *ms, movement m, int duration) {
+  set_movement(ms, m);
   vTaskDelay(pdMS_TO_TICKS(duration));
 }

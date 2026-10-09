@@ -43,11 +43,13 @@ motor_set motors_create(gpio_num_t in1, gpio_num_t in2, gpio_num_t in3,
                         gpio_num_t in4);
 void motors_setup(motor_set *ms);
 
-void motor_set_movement(motor_struct *m, motor_direction dir, motor_speed speed);
+void motor_set_movement(motor_struct *m, motor_direction dir,
+                        motor_speed speed);
 void motor_stop(motor_struct *m);
 
 void motors_stop_all(motor_set *ms);
 
-void do_movement(motor_set *ms, movement m, int duration);
+void set_movement(motor_set *ms, movement m);
+void do_movement_for(motor_set *ms, movement m, int duration);
 
 #endif
