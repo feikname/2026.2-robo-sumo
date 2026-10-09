@@ -64,7 +64,7 @@ int hcsr04_read_cm(hcsr04_struct *hcsr04) {
   const int trig_pin = hcsr04->trigger_pin;
   const int echo_pin = hcsr04->echo_pin;
   const int timeout_duration = hcsr04->timeout_duration;
-  ;
+
   hcsr04_trigger(trig_pin);
 
   // we started receiving back the signal
