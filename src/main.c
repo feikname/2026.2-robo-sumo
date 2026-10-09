@@ -36,7 +36,6 @@ void setup() {
   // Distance detection subsystem
   hcsr04 = hcsr04_create(GPIO_NUM_23, GPIO_NUM_22, 25000);
   hcsr04_setup(&hcsr04);
-  setup_distance_leds();
 
   // (Simulated) Motor/movement subsystem
   motors = motors_create();
@@ -63,7 +62,6 @@ void loop() {
   printf("LDR frente -> %d\nLDR tras -> %d\n", ldr_frente, ldr_tras);
 
   ObstacleDistance od = to_dist_range(distance);
-  distance_leds_update(od);
 
   if (od == OBSTACLE_IS_VERY_CLOSE) {
     do_maneuver(MANEUEVER_EVASION, &motors);
