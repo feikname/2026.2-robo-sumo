@@ -1,63 +1,53 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-// TODO remove me
-// hardcoded LEDs for wokwi
-#define LED_DIREITA GPIO_NUM_16
-#define LED_ESQUERDA GPIO_NUM_32
-#define LED_TRAS GPIO_NUM_27
-#define LED_FRENTE GPIO_NUM_13
+// gpio_num_t
+#include "hal/gpio_types.h"
 
 typedef enum {
-  MOTOR_INACTIVE,
-  MOTOR_FORWARD_FAST,
-  MOTOR_FORWARD_SLOW,
-  MOTOR_BACKWARD_FAST,
-  MOTOR_BACKWARD_SLOW,
-} MotorState;
+  MOTOR_DIRECTION_FORWARD,
+  MOTOR_DIRECTION_BACKWARD,
+} motor_direction;
+
+typedef enum {
+  MOTOR_SPEED_SLOW,
+  MOTOR_SPEED_FAST,
+} motor_speed;
+
+// TODO: speed control pin (EN)
+typedef struct {
+  gpio_num_t in1;
+  gpio_num_t in2;
+  bool stopped;
+  motor_direction direction;
+  motor_speed speed;
+} motor_struct;
 
 typedef struct {
-  MotorState left_motor;
-  MotorState right_motor;
+  motor_struct left;
+  motor_struct right;
 } motor_set;
 
 typedef enum {
-  STRATEGY_DEFAULT,
-  STRATEGY_AGGRESIVE,
-  STRATEGY_DEFENSIVE,
-  STRATEGY_RANDOM // Giro, Avanço, Recuo
-} Strategy;
+  MOVE_FORWARD,
+  MOVE_BACKWARD,
+  MOVE_STEER_RIGHT,
+  MOVE_STEER_LEFT,
+  MOVE_STATIONARY,
+  MOVE_SPIN_CLOCKWISE,
+  MOVE_SPIN_COUNTERCLOCKWISE,
+} movement;
 
-typedef enum {
-  MANEUEVER_EVASION,
-  MANEUEVER_FRONT_LDR,
-  MANEUEVER_BACK_LDR,
-  MANEUVER_STOP,
-} Maneuver;
+// TODO: speed control pin (EN)
+motor_set motors_create(gpio_num_t in1, gpio_num_t in2, gpio_num_t in3,
+                        gpio_num_t in4);
+void motors_setup(motor_set *ms);
 
-typedef enum {
-  DIRECTION_FORWARD,
-  DIRECTION_STEER_LEFT,
-  DIRECTION_BACKWARD,
-  DIRECTION_STEER_RIGHT,
-  DIRECTION_STATIONARY,
-  DIRECTION_SPIN_CLOCKWISE,
-  DIRECTION_SPIN_COUNTERCLOCKWISE,
-} Direction;
+void motor_set_movement(motor_struct *m, motor_direction dir, motor_speed speed);
+void motor_stop(motor_struct *m);
 
-typedef enum {
-  SPEED_FAST,
-  SPEED_SLOW,
-} Speed;
+void motors_stop_all(motor_set *ms);
 
-motor_set motors_create();
-void motors_setup();
-void set_motor_movement(Direction dir, Speed speed, motor_set *ms);
-void do_movement(Direction dir, Speed speed, int duration, motor_set *ms);
-void do_maneuver(Maneuver m, motor_set *ms);
-void do_maneuver_and_restore_state(Maneuver m, motor_set *ms);
-void do_maneuver_ldr_front_detected(motor_set *ms);
-void do_maneuver_ldr_back_detected(motor_set *ms);
-void do_maneuver_stop(motor_set *ms);
+void do_movement(motor_set *ms, movement m, int duration);
 
 #endif

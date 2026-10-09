@@ -15,12 +15,10 @@
 
 // system components
 #include "button.h"
-#include "hcsr04.h"
 #include "distancia.h"
-#include "motor.h"
+#include "hcsr04.h"
 #include "ldr.h"
-
-Strategy strat = STRATEGY_DEFAULT;
+#include "motor.h"
 
 void setup();
 void loop();
@@ -47,31 +45,35 @@ ldr_struct ldr;
 
 void setup() {
   // Distance detection subsystem
-  hcsr04 = hcsr04_create(TRIG, GPIO_NUM_22, 25000);
-  hcsr04_setup(&hcsr04);
+  // hcsr04 = hcsr04_create(TRIG, GPIO_NUM_22, 25000);
+  // hcsr04_setup(&hcsr04);
 
-  // LDR setup
-  ldr_setup(&ldr);
+  // // LDR setup
+  // ldr = ldr_create(LDR);
+  // ldr_setup(&ldr);
 
   // Activation subsystem
   // setup_pushbutton();
   // wait_system_start();
 
   // (Simulated) Motor/movement subsystem
-  motors = motors_create();
-  motors_setup();
+  motors = motors_create(IN1, IN2, IN3, IN4);
+  motors_setup(&motors);
 
   // Default strategy: go forward
-  set_motor_movement(DIRECTION_FORWARD, SPEED_FAST, &motors);
+  // set_motor_movement(&ms, SPEED_FAST, &motors);
 }
 
 void loop() {
-  int distance = hcsr04_read_cm(&hcsr04);
-  bool border_found = ldr_read(&ldr);
+  // int distance = hcsr04_read_cm(&hcsr04);
+  // bool border_found = ldr_read(&ldr);
 
-  ObstacleDistance od = to_dist_range(distance);
+  // ObstacleDistance od = to_dist_range(distance);
 
-  vTaskDelay(pdMS_TO_TICKS(250));
+  do_movement(&motors, MOVE_FORWARD, 1000);
+  do_movement(&motors, MOVE_STATIONARY, 1000);
+  do_movement(&motors, MOVE_BACKWARD, 1000);
+  do_movement(&motors, MOVE_STATIONARY, 1000);
 }
 
 void app_main() {

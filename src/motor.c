@@ -10,217 +10,97 @@
 // prototype definitions
 #include "motor.h"
 
-// 'private' methods
-static Direction to_direction(motor_set *motor_set);
-static void update_motor_leds(motor_set *motor_set);
-static void do_evasion_maneuver(motor_set *ms);
+static motor_struct _default_motor_struct(gpio_num_t in1, gpio_num_t in2) {
+  motor_struct motor = {
+      .in1 = in1,
+      .in2 = in2,
+      .stopped = true,
+      .direction = MOTOR_DIRECTION_FORWARD,
+      .speed = MOTOR_SPEED_FAST,
+  };
 
-motor_set motors_create() {
+  return motor;
+}
+
+motor_set motors_create(gpio_num_t in1, gpio_num_t in2, gpio_num_t in3,
+                        gpio_num_t in4) {
   motor_set motors = {
-      .left_motor = MOTOR_INACTIVE,
-      .right_motor = MOTOR_INACTIVE,
+      .left = _default_motor_struct(in1, in2),
+      .right = _default_motor_struct(in3, in4),
   };
 
   return motors;
 }
 
-void motors_setup() {
-  gpio_set_direction(LED_DIREITA, GPIO_MODE_OUTPUT);
-  gpio_set_direction(LED_ESQUERDA, GPIO_MODE_OUTPUT);
-  gpio_set_direction(LED_TRAS, GPIO_MODE_OUTPUT);
-  gpio_set_direction(LED_FRENTE, GPIO_MODE_OUTPUT);
+void motors_setup(motor_set *ms) {
+  gpio_set_direction(ms->left.in1, GPIO_MODE_OUTPUT);
+  gpio_set_direction(ms->left.in2, GPIO_MODE_OUTPUT);
+  gpio_set_direction(ms->right.in1, GPIO_MODE_OUTPUT);
+  gpio_set_direction(ms->right.in2, GPIO_MODE_OUTPUT);
+
+  gpio_set_level(ms->left.in1, 0);
+  gpio_set_level(ms->left.in2, 0);
+  gpio_set_level(ms->right.in1, 0);
+  gpio_set_level(ms->right.in2, 0);
 }
 
-static Direction to_direction(motor_set *motor_set) {
-  MotorState l = motor_set->left_motor;
-  MotorState r = motor_set->right_motor;
-
-  if (l == MOTOR_FORWARD_SLOW && r == MOTOR_FORWARD_SLOW) {
-    return DIRECTION_FORWARD;
-  }
-  if (l == MOTOR_FORWARD_FAST && r == MOTOR_FORWARD_FAST) {
-    return DIRECTION_FORWARD;
-  }
-  if (l == MOTOR_BACKWARD_SLOW && r == MOTOR_BACKWARD_SLOW) {
-    return DIRECTION_BACKWARD;
-  }
-  if (l == MOTOR_BACKWARD_FAST && r == MOTOR_BACKWARD_FAST) {
-    return DIRECTION_BACKWARD;
-  }
-  if (l == MOTOR_FORWARD_FAST && r == MOTOR_FORWARD_SLOW) {
-    return DIRECTION_STEER_RIGHT;
-  }
-  if (l == MOTOR_FORWARD_SLOW && r == MOTOR_FORWARD_FAST) {
-    return DIRECTION_STEER_LEFT;
-  }
-  if (l == MOTOR_INACTIVE && r == MOTOR_INACTIVE) {
-    return DIRECTION_STATIONARY;
-  }
-  if (l == MOTOR_INACTIVE && r == MOTOR_INACTIVE) {
-    return DIRECTION_STATIONARY;
-  }
-  if (l == MOTOR_FORWARD_SLOW && r == MOTOR_INACTIVE) {
-    return DIRECTION_SPIN_CLOCKWISE;
-  }
-  if (l == MOTOR_FORWARD_FAST && r == MOTOR_INACTIVE) {
-    return DIRECTION_SPIN_CLOCKWISE;
-  }
-  if (l == MOTOR_FORWARD_SLOW && r == MOTOR_INACTIVE) {
-    return DIRECTION_SPIN_COUNTERCLOCKWISE;
-  }
-  if (l == MOTOR_FORWARD_FAST && r == MOTOR_INACTIVE) {
-    return DIRECTION_SPIN_COUNTERCLOCKWISE;
-  }
-
-  // Not really
-  return DIRECTION_SPIN_CLOCKWISE;
-}
-
-static void update_motor_leds(motor_set *motor_set) {
-  Direction dir = to_direction(motor_set);
-
-  bool frente = false;
-  bool esquerda = false;
-  bool tras = false;
-  bool direita = false;
-
+void motor_set_movement(motor_struct *m, motor_direction dir,
+                        motor_speed speed) {
+  // TODO: use motor speed
   switch (dir) {
-  case DIRECTION_FORWARD:
-    frente = true;
+  case MOTOR_DIRECTION_FORWARD:
+    gpio_set_level(m->in1, 1);
+    gpio_set_level(m->in2, 0);
     break;
-
-  case DIRECTION_STEER_LEFT:
-    esquerda = true;
-    break;
-
-  case DIRECTION_BACKWARD:
-    tras = true;
-    break;
-
-  case DIRECTION_STEER_RIGHT:
-    direita = true;
-    break;
-
-  case DIRECTION_SPIN_CLOCKWISE:
-    frente = true;
-    direita = true;
-    break;
-
-  case DIRECTION_SPIN_COUNTERCLOCKWISE:
-    tras = true;
-    esquerda = true;
-    break;
-
-  case DIRECTION_STATIONARY:
+  case MOTOR_DIRECTION_BACKWARD:
+    gpio_set_level(m->in1, 0);
+    gpio_set_level(m->in2, 1);
     break;
   }
-
-  gpio_set_level(LED_FRENTE, frente);
-  gpio_set_level(LED_ESQUERDA, esquerda);
-  gpio_set_level(LED_TRAS, tras);
-  gpio_set_level(LED_DIREITA, direita);
 }
 
-void set_motor_movement(Direction dir, Speed speed, motor_set *ms) {
-  if (dir == DIRECTION_FORWARD) {
-    if (speed == SPEED_SLOW) {
-      ms->left_motor = MOTOR_FORWARD_SLOW;
-      ms->right_motor = MOTOR_FORWARD_SLOW;
-    }
-    if (speed == SPEED_FAST) {
-      ms->left_motor = MOTOR_FORWARD_FAST;
-      ms->right_motor = MOTOR_FORWARD_FAST;
-    }
-  }
-  if (dir == DIRECTION_STEER_LEFT) {
-    ms->left_motor = MOTOR_FORWARD_SLOW;
-    ms->right_motor = MOTOR_FORWARD_FAST;
-  }
-  if (dir == DIRECTION_BACKWARD) {
-    if (speed == SPEED_SLOW) {
-      ms->left_motor = MOTOR_BACKWARD_SLOW;
-      ms->right_motor = MOTOR_BACKWARD_SLOW;
-    }
-    if (speed == SPEED_FAST) {
-      ms->left_motor = MOTOR_BACKWARD_FAST;
-      ms->right_motor = MOTOR_BACKWARD_FAST;
-    }
-  }
-  if (dir == DIRECTION_STEER_RIGHT) {
-    ms->left_motor = MOTOR_FORWARD_FAST;
-    ms->right_motor = MOTOR_FORWARD_SLOW;
-  }
-  if (dir == DIRECTION_STATIONARY) {
-    ms->left_motor = MOTOR_INACTIVE;
-    ms->right_motor = MOTOR_INACTIVE;
-  }
-  if (dir == DIRECTION_SPIN_CLOCKWISE) {
-    if (speed == SPEED_SLOW) {
-      ms->left_motor = MOTOR_FORWARD_SLOW;
-      ms->right_motor = MOTOR_INACTIVE;
-    }
-    if (speed == SPEED_FAST) {
-      ms->left_motor = MOTOR_FORWARD_FAST;
-      ms->right_motor = MOTOR_INACTIVE;
-    }
-  }
-  if (dir == DIRECTION_SPIN_COUNTERCLOCKWISE) {
-    if (speed == SPEED_SLOW) {
-      ms->left_motor = MOTOR_FORWARD_SLOW;
-      ms->right_motor = MOTOR_INACTIVE;
-    }
-    if (speed == SPEED_FAST) {
-      ms->left_motor = MOTOR_FORWARD_FAST;
-      ms->right_motor = MOTOR_INACTIVE;
-    }
-  }
-
-  update_motor_leds(ms);
+void motor_stop(motor_struct *m) {
+  gpio_set_level(m->in1, 0);
+  gpio_set_level(m->in2, 0);
+  m->stopped = true;
 }
 
-void do_movement(Direction dir, Speed speed, int duration, motor_set *ms) {
-  set_motor_movement(dir, speed, ms);
+void motors_stop_all(motor_set *ms) {
+  motor_stop(&ms->left);
+  motor_stop(&ms->right);
+}
+
+void do_movement(motor_set *ms, movement m, int duration) {
+
+  switch (m) {
+  case MOVE_FORWARD:
+    motor_set_movement(&ms->left, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_FAST);
+    motor_set_movement(&ms->right, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_FAST);
+    break;
+  case MOVE_BACKWARD:
+    motor_set_movement(&ms->left, MOTOR_DIRECTION_BACKWARD, MOTOR_SPEED_FAST);
+    motor_set_movement(&ms->right, MOTOR_DIRECTION_BACKWARD, MOTOR_SPEED_FAST);
+    break;
+  case MOVE_STEER_RIGHT:
+    motor_set_movement(&ms->left, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_FAST);
+    motor_set_movement(&ms->right, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_SLOW);
+    break;
+  case MOVE_STEER_LEFT:
+    motor_set_movement(&ms->left, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_SLOW);
+    motor_set_movement(&ms->right, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_FAST);
+    break;
+  case MOVE_STATIONARY:
+    motors_stop_all(ms);
+    break;
+  case MOVE_SPIN_CLOCKWISE:
+    motor_set_movement(&ms->left, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_FAST);
+    motor_stop(&ms->right);
+    break;
+  case MOVE_SPIN_COUNTERCLOCKWISE:
+    motor_stop(&ms->left);
+    motor_set_movement(&ms->right, MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_FAST);
+    break;
+  }
+
   vTaskDelay(pdMS_TO_TICKS(duration));
-}
-
-void do_maneuver(Maneuver m, motor_set *ms) {
-  if (m == MANEUEVER_EVASION) {
-    do_evasion_maneuver(ms);
-  }else if( m == MANEUEVER_FRONT_LDR ){
-    do_maneuver_ldr_front_detected(ms);
-  }else if ( m == MANEUEVER_BACK_LDR ){
-    do_maneuver_ldr_back_detected(ms);
-  }else if ( m == MANEUVER_STOP ){
-    do_maneuver_stop(ms);
-  }
-}
-
-void do_maneuver_ldr_front_detected(motor_set *ms){
-  do_movement(DIRECTION_BACKWARD,SPEED_FAST,1000,ms);
-  do_movement(DIRECTION_SPIN_CLOCKWISE,SPEED_FAST,1000,ms);
-}
-
-void do_maneuver_ldr_back_detected(motor_set *ms){
-  do_movement(DIRECTION_FORWARD,SPEED_FAST,1000,ms);
-  do_movement(DIRECTION_SPIN_CLOCKWISE,SPEED_FAST,1000,ms);
-}
-
-void do_maneuver_and_restore_state(Maneuver m, motor_set *ms) {
-  // this doesn't quite work. need to debug.
-  motor_set original_ms = *ms;
-  if (m == MANEUEVER_EVASION) {
-    do_evasion_maneuver(ms);
-  }
-  *ms = original_ms;
-}
-void do_maneuver_stop(motor_set *ms) {
-  ms->left_motor = MOTOR_INACTIVE;
-  ms->right_motor = MOTOR_INACTIVE;
-}
-
-static void do_evasion_maneuver(motor_set *ms) {
-  do_movement(DIRECTION_BACKWARD, SPEED_FAST, 500, ms);
-
-  // tanto faz se direita ou esquerda
-  do_movement(DIRECTION_STEER_LEFT, SPEED_FAST, 150, ms);
 }
