@@ -44,7 +44,8 @@ ldr_struct ldr;
 
 // PWM configuration
 #define PWM_FREQ 1000
-#define PWM_DUTY 512  // 50% duty cycle
+#define PWM_DUTY_50 512  // 50% duty cycle
+#define PWM_DUTY_25 256  // 25% duty cycle
 
 void setup() {
   // Distance detection subsystem
@@ -110,25 +111,36 @@ void loop() {
   printf("LDR: %d\n", border_found);
   printf("============\n");
 
-  if (distance > 0 && distance < 20) {
-    // Right motor forward at 50%
+  if (distance > 0 && distance < 30) {
+    // Both motors forward at 50%
     gpio_set_level(R_IN1, 1);
     gpio_set_level(R_IN2, 0);
 
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, PWM_DUTY);
+    gpio_set_level(L_IN1, 1);
+    gpio_set_level(L_IN2, 0);
+
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, PWM_DUTY_50);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
+
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, PWM_DUTY_50);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+
   } else {
-    // Right motor stopped
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, 0);
+    // Turn in place at 25%
+    // Right motor forward
+    gpio_set_level(R_IN1, 1);
+    gpio_set_level(R_IN2, 0);
+
+    // Left motor backward
+    gpio_set_level(L_IN1, 0);
+    gpio_set_level(L_IN2, 1);
+
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, PWM_DUTY_25);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
 
-    gpio_set_level(R_IN1, 0);
-    gpio_set_level(R_IN2, 0);
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, PWM_DUTY_25);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
   }
-
-  // Left motor remains stopped
-  ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
-  ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
 }
 
 void app_main() {
@@ -136,6 +148,6 @@ void app_main() {
 
   while (true) {
     loop();
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(100));
   }
 }
