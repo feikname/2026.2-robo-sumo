@@ -35,8 +35,8 @@ ldr_struct ldr;
 #define R_PWM GPIO_NUM_26
 
 // H-Bridge (Motor 2 - Left)
-#define L_IN1 GPIO_NUM_21
-#define L_IN2 GPIO_NUM_22
+#define L_IN1 GPIO_NUM_22
+#define L_IN2 GPIO_NUM_21
 #define L_PWM GPIO_NUM_23
 
 // LDR (arena edge)
