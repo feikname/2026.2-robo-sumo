@@ -11,8 +11,6 @@
 #include "stdio.h"
 
 // system components
-#include "button.h"
-// #include "distancia.h"
 #include "hcsr04.h"
 #include "ldr.h"
 #include "motor.h"
@@ -22,7 +20,6 @@ void loop();
 void app_main();
 
 hcsr04_struct hcsr04;
-motor_set motors;
 ldr_struct ldr;
 
 // HC-SR04 (distance)
@@ -50,33 +47,15 @@ void setup() {
   // LDR setup
   ldr = ldr_create(LDR);
   ldr_setup(&ldr);
-
-  // Activation subsystem
-  // setup_pushbutton();
-  // wait_system_start();
-
-  // (Simulated) Motor/movement subsystem
-  // motors = motors_create(IN1, IN2, IN3, IN4);
-  // motors_setup(&motors);
-
-  // Default strategy: go forward
-  // set_movement(&motors, MOVE_FORWARD);
 }
 
 void loop() {
   int distance = hcsr04_read_cm(&hcsr04);
   bool border_found = ldr_read(&ldr);
 
-  // ObstacleDistance od = to_dist_range(distance);
-
   printf("Distância: %d\n", distance);
   printf("LDR: %d\n", border_found);
   printf("============\n");
-
-  // do_movement_for(&motors, MOVE_FORWARD, 1000);
-  // do_movement_for(&motors, MOVE_STATIONARY, 1000);
-  // do_movement_for(&motors, MOVE_BACKWARD, 1000);
-  // do_movement_for(&motors, MOVE_STATIONARY, 1000);
 }
 
 void app_main() {
