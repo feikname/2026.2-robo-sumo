@@ -30,8 +30,8 @@ ldr_struct ldr;
 #define ECHO GPIO_NUM_35
 
 // H-Bridge (Motor 1 - Right)
-#define R_IN1 GPIO_NUM_14
-#define R_IN2 GPIO_NUM_27
+#define R_IN1 GPIO_NUM_27
+#define R_IN2 GPIO_NUM_14
 #define R_PWM GPIO_NUM_26
 
 // H-Bridge (Motor 2 - Left)
