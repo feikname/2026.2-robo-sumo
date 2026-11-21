@@ -111,24 +111,24 @@ void loop() {
   printf("============\n");
 
   if (distance > 0 && distance < 20) {
-    // Left motor forward at 50%
-    gpio_set_level(L_IN1, 1);
-    gpio_set_level(L_IN2, 0);
+    // Right motor forward at 50%
+    gpio_set_level(R_IN1, 1);
+    gpio_set_level(R_IN2, 0);
 
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, PWM_DUTY);
-    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, PWM_DUTY);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
   } else {
-    // Left motor stopped
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
-    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+    // Right motor stopped
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, 0);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
 
-    gpio_set_level(L_IN1, 0);
-    gpio_set_level(L_IN2, 0);
+    gpio_set_level(R_IN1, 0);
+    gpio_set_level(R_IN2, 0);
   }
 
-  // Right motor remains stopped
-  ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, 0);
-  ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
+  // Left motor remains stopped
+  ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
+  ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
 }
 
 void app_main() {
