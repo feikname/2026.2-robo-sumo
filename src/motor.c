@@ -117,7 +117,7 @@ int _to_pwm(motor_speed speed) {
     return 0;
 
   default:
-    return 1024;
+    return PWM_DUTY_100;
   }
 }
 
