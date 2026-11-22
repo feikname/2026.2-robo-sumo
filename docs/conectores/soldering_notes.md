@@ -1,4 +1,4 @@
-# Sodlering notes for XT60 / T Dean
+# Sodlering notes for T Dean
 
 ## Both
 
@@ -20,8 +20,3 @@ To solder:
 
 Yes it is hard to connect and disconnnect them together, specially
 on first time.
-
-## XT60
-
-![./xt60.png](./xt60.png)
-
