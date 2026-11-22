@@ -31,7 +31,7 @@ motor_set motors;
 ldr_struct ldr;
 
 // General settings
-// Please do not set loop delay below 64ms, to reduce interference from previous echoes
+// Please do not set loop delay below 64ms, to reduce interference from HC-SR04 previous echoes
 #define LOOP_DELAY 64
 #define STARTUP_DELAY 5000
 
