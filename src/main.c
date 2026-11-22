@@ -101,6 +101,9 @@ void setup() {
 
   gpio_set_level(R_IN1, 0);
   gpio_set_level(R_IN2, 0);
+
+  // Wait 5s before start
+  vTaskDelay(pdMS_TO_TICKS(5000));
 }
 
 void loop() {
