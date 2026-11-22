@@ -44,8 +44,12 @@ ldr_struct ldr;
 
 // PWM configuration
 #define PWM_FREQ 1000
-#define PWM_DUTY_50 512  // 50% duty cycle
+#define PWM_DUTY_75 760  // 75% duty cycle
+#define PWM_DUTY_50 512  // 75% duty cycle
 #define PWM_DUTY_25 256  // 25% duty cycle
+
+// General settings
+#define LOOP_DELAY 1000
 
 void setup() {
   // Distance detection subsystem
@@ -122,10 +126,10 @@ void loop() {
     gpio_set_level(L_IN1, 1);
     gpio_set_level(L_IN2, 0);
 
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, PWM_DUTY_50);
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, PWM_DUTY_75);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
 
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, PWM_DUTY_50);
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, PWM_DUTY_75);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
 
   } else {
@@ -151,6 +155,6 @@ void app_main() {
 
   while (true) {
     loop();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(LOOP_DELAY));
   }
 }
