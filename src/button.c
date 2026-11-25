@@ -31,6 +31,6 @@ void wait_system_start() {
   pushbutton_waitpress();
 
   printf("Starting system in 5 seconds...\n");
-  vTaskDelay(pdMS_TO_TICKS(5000));
+  vTaskDelay(pdMS_TO_TICKS(1000));
   printf("on\n");
 }

@@ -29,11 +29,12 @@ void app_main();
 hcsr04_struct hcsr04;
 motor_set motors;
 ldr_struct ldr;
+int num = 0;
 
 // General settings
 // Please do not set loop delay below 64ms, to reduce interference from HC-SR04 previous echoes
 #define LOOP_DELAY 64
-#define STARTUP_DELAY 5000
+#define STARTUP_DELAY 1000
 
 void setup() {
   // pode valer a pena diminuir o timeout aqui de 25ms para algo menor
@@ -55,8 +56,13 @@ void loop() {
   int distance = hcsr04_read_cm(&hcsr04);
   bool border_found = ldr_read(&ldr);
 
-  printf("Distância: %d\n", distance);
-  printf("LDR: %d\n", border_found);
+
+  num++;
+  if (distance == -1) {
+    printf("Loop: %d\n", num);
+    printf("Distância: %d\n", distance);
+    printf("LDR: %d\n", border_found);  
+  
 
   ObstacleDistance od = to_dist_range(distance);
 
@@ -72,6 +78,7 @@ void loop() {
   }
 
   printf("============\n");
+}
 }
 
 void app_main() {
