@@ -40,7 +40,7 @@ void app_main();
 #define STARTUP_DELAY 5000
 
 // Sensor LDR (1 = faixa branca / nível alto; troque para 0 se for ativo-baixo)
-#define LDR_WHITE 1
+#define LDR_WHITE 0
 #define LDR_TRIGGER_COUNT 3
 
 // Limites de distância do ultrassônico (cm)
@@ -53,8 +53,8 @@ void app_main();
 #define SEARCH_MAX_SWEEP_MS 1500
 #define INERTIA_COMPENSATION_MS 40 // Ajuste fino (30 a 50 ms) para mirar no centro
 #define STALKING_DURATION_MS 800   // Tempo parado confirmando o alvo (0,8 a 1,0 s)
-#define CREEPING_DURATION_MS 600   // Tempo avançando devagar (0,6 s)
-#define CHARGING_TIMEOUT_MS 1000   // Limite de segurança empurrando (2,5 s)
+#define CREEPING_DURATION_MS 300   // Tempo avançando devagar (0,6 s)
+#define CHARGING_TIMEOUT_MS 500   // Limite de segurança empurrando (2,5 s)
 
 // Parâmetros do Retreat (fuga da borda)
 #define RETREAT_PULSE_MS 150     // Cada pulso de ré
@@ -178,7 +178,7 @@ void loop() {
 
   // if (ldr_white_count >= LDR_TRIGGER_COUNT && current_state != STATE_RETREAT) {
   //   printf("[GLOBAL] Borda branca detectada %dx! Abortando para RETREAT.\n", ldr_white_count);
-  //   motors_stop_al;l(&motors);
+  //   motors_stop_all(&motors);
   //   ldr_white_count = 0;
   //   enter_state(STATE_RETREAT);
   // }
@@ -187,6 +187,7 @@ void loop() {
   int distance = -1;
   if (current_state != STATE_CHARGING && current_state != STATE_RETREAT) {
     distance = hcsr04_read_cm(&hcsr04);
+    printf("Distância: %d\n", distance);
   }
 
   // --------------------------------------------------------------------------

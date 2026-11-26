@@ -26,7 +26,7 @@
 #define PWM_CHANNEL_R LEDC_CHANNEL_1
 
 // Misc
-#define DEFAULT_SPEED MOTOR_SPEED_50
+#define DEFAULT_SPEED MOTOR_SPEED_10
 
 static motor_struct _default_motor_struct(gpio_num_t in1, gpio_num_t in2,
                                           gpio_num_t pwm,
