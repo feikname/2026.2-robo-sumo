@@ -17,7 +17,6 @@
 #include "esp_timer.h"
 
 // system components
-#include "distancia.h"
 #include "hcsr04.h"
 #include "ldr.h"
 #include "motor.h"
@@ -28,6 +27,19 @@
 void setup();
 void loop();
 void app_main();
+
+
+
+// ============================================================================
+// SELEÇÃO DE MODO DE COMBATE
+// ============================================================================
+
+typedef enum {
+  MODE_HUNTER,    // Modo Caçador (alvo parado)
+  MODE_GLADIATOR  // Modo Gladiador (combate 1v1 contra robô móvel)
+} RobotMode;
+
+RobotMode current_mode = MODE_HUNTER;
 
 
 
@@ -44,26 +56,39 @@ void app_main();
 #define LDR_TRIGGER_COUNT 3
 
 // Limites de distância do ultrassônico (cm)
-#define DIST_DETECT_MAX_CM 55
-#define DIST_LOST_MIN_CM 60
 #define DIST_JUMP_THRESHOLD_CM 15
-#define STALKING_TOLERANCE_CM 3
+// #define DIST_DETECT_MAX_CM 55
+// #define DIST_LOST_MIN_CM 60
+// #define STALKING_TOLERANCE_CM 3
 
 // Tempos dos estados (ms)
 #define SEARCH_MAX_SWEEP_MS 1500
-#define INERTIA_COMPENSATION_MS 40 // Ajuste fino (30 a 50 ms) para mirar no centro
-#define STALKING_DURATION_MS 800   // Tempo parado confirmando o alvo (0,8 a 1,0 s)
-#define CREEPING_DURATION_MS 300   // Tempo avançando devagar (0,6 s)
-#define CHARGING_TIMEOUT_MS 500   // Limite de segurança empurrando (2,5 s)
+// #define INERTIA_COMPENSATION_MS 64 // Ajuste fino para mirar no centro compensando a inércia
+// #define STALKING_DURATION_MS 800   // Tempo parado confirmando o alvo (0,8 a 1,0 s)
+// #define CREEPING_DURATION_MS 300   // Tempo avançando devagar (0,6 s)
+// #define CHARGING_TIMEOUT_MS 500   // Limite de segurança empurrando (2,5 s)
 
 // Parâmetros do Retreat (fuga da borda)
 #define RETREAT_PULSE_MS 150     // Cada pulso de ré
 #define RETREAT_MAX_ATTEMPTS 4   // Máximo de tentativas antes de travar por segurança
 #define RETREAT_MARGIN_MS 80     // Ré extra após pisar no preto
-#define TURN_135_DEG_MS 450      // Calibrar na prática para girar ~135 graus
+#define TURN_135_DEG_MS 450      // Calibrar na prática para girar ~120 graus
 
-// Velocidades específicas
-#define CREEPING_SPEED MOTOR_SPEED_25
+// Estrutura que concentra os parâmetros variáveis entre Hunter e Gladiator
+typedef struct {
+  int dist_detect_max_cm;
+  int dist_lost_min_cm;
+  int stalking_tolerance_cm;
+  int64_t inertia_compensation_ms;
+  int64_t stalking_duration_ms;
+  int64_t creeping_duration_ms;
+  int64_t charging_timeout_ms;
+  motor_speed creeping_speed;
+  motor_speed charging_speed;
+  bool measure_target_width;
+} ModeConfig;
+
+ModeConfig cfg;
 
 
 
@@ -111,6 +136,33 @@ int creeping_start_dist = -1;
 // FUNÇÕES AUXILIARES
 // ============================================================================
 
+// Carrega os parâmetros do modo selecionado na variável current_mode
+static void load_mode_config(RobotMode mode) {
+  if (mode == MODE_HUNTER) {
+    cfg.dist_detect_max_cm = 75;
+    cfg.dist_lost_min_cm = 75;
+    cfg.stalking_tolerance_cm = 3;
+    cfg.inertia_compensation_ms = 64;
+    cfg.stalking_duration_ms = 800;
+    cfg.creeping_duration_ms = 300;
+    cfg.charging_timeout_ms = 500;
+    cfg.creeping_speed = MOTOR_SPEED_25;
+    cfg.charging_speed = MOTOR_SPEED_75;
+    cfg.measure_target_width = true;
+  } else { // MODE_GLADIATOR
+    cfg.dist_detect_max_cm = 75;
+    cfg.dist_lost_min_cm = 75;
+    cfg.stalking_tolerance_cm = 5;
+    cfg.inertia_compensation_ms = 40;
+    cfg.stalking_duration_ms = 100;
+    cfg.creeping_duration_ms = 100;
+    cfg.charging_timeout_ms = 1200;
+    cfg.creeping_speed = MOTOR_SPEED_50;
+    cfg.charging_speed = MOTOR_SPEED_75;
+    cfg.measure_target_width = false;
+  }
+}
+
 // Retorna o tempo atual desde que o ESP32 ligou, em milissegundos
 static int64_t millis() {
   return esp_timer_get_time() / 1000;
@@ -147,6 +199,8 @@ static void enter_state(RobotState next_state) {
 // ============================================================================
 
 void setup() {
+  load_mode_config(current_mode);
+
   // Timeout de 25ms (~4,3m máx); pode reduzir para ~10000us (10ms) para leituras mais rápidas
   hcsr04 = hcsr04_create(TRIG, ECHO, 25000);
   hcsr04_setup(&hcsr04);
@@ -157,7 +211,8 @@ void setup() {
   motors = motors_create(L_IN1, L_IN2, L_PWM, R_IN1, R_IN2, R_PWM);
   motors_setup(&motors);
 
-  printf("Aguardando %d ms (regra de inicio)...\n", STARTUP_DELAY);
+  printf("Modo ativo: %s | Aguardando %d ms (regra de inicio)...\n",
+         (current_mode == MODE_HUNTER) ? "HUNTER" : "GLADIATOR", STARTUP_DELAY);
   vTaskDelay(pdMS_TO_TICKS(STARTUP_DELAY));
 
   enter_state(STATE_SEARCHING);
@@ -183,7 +238,7 @@ void loop() {
   //   enter_state(STATE_RETREAT);
   // }
 
-  // Durante o Charging, ignoramos o ultrassônico (zona cega de 2-3 cm)
+  // Durante o Charging e o Retreat, ignoramos o ultrassônico (zona cega de 2-3 cm)
   int distance = -1;
   if (current_state != STATE_CHARGING && current_state != STATE_RETREAT) {
     distance = hcsr04_read_cm(&hcsr04);
@@ -203,12 +258,23 @@ void loop() {
 
     if (search_substate == SEARCH_SCANNING) {
       // Sub-estado 1A: Procurando a borda inicial do alvo
-      if (!ignore_wide_obstacle && is_target_visible(distance, DIST_DETECT_MAX_CM)) {
-        printf("[1A -> 1B] Alvo detectado a %d cm. Iniciando cronometro.\n", distance);
-        sweep_start_ms = now_ms;
-        last_valid_dist = distance;
-        search_substate = SEARCH_MEASURING;
-      } else if (!is_target_visible(distance, DIST_LOST_MIN_CM)) {
+      if (!ignore_wide_obstacle && is_target_visible(distance, cfg.dist_detect_max_cm)) {
+        if (cfg.measure_target_width) {
+          // Modo Hunter: inicia cronômetro para medir largura da garrafa
+          printf("[1A -> 1B] Alvo detectado a %d cm. Iniciando cronometro.\n", distance);
+          sweep_start_ms = now_ms;
+          last_valid_dist = distance;
+          search_substate = SEARCH_MEASURING;
+        } else {
+          // Modo Gladiator: trava imediatamente no oponente sem atravessá-lo
+          printf("[1A -> STALKING] Oponente detectado a %d cm! Travando mira.\n", distance);
+          motors_stop_all(&motors);
+          set_movement(&motors, MOVE_SPIN_COUNTERCLOCKWISE);
+          vTaskDelay(pdMS_TO_TICKS(cfg.inertia_compensation_ms));
+          motors_stop_all(&motors);
+          enter_state(STATE_STALKING);
+        }
+      } else if (!is_target_visible(distance, cfg.dist_lost_min_cm)) {
         // Libera a trava assim que terminar de passar por um obstáculo largo
         ignore_wide_obstacle = false;
       }
@@ -221,12 +287,12 @@ void loop() {
         printf("[1B] Obstaculo muito largo (>%d ms). Ignorando.\n", SEARCH_MAX_SWEEP_MS);
         ignore_wide_obstacle = true;
         search_substate = SEARCH_SCANNING;
-      } else if (distance < 0 || distance > DIST_LOST_MIN_CM ||
+      } else if (distance < 0 || distance > cfg.dist_lost_min_cm ||
                  (distance - last_valid_dist) > DIST_JUMP_THRESHOLD_CM) {
         // Saiu da borda da garrafa! Calcula metade do tempo + compensação de inércia
         motors_stop_all(&motors);
 
-        int64_t center_turn_ms = (elapsed_ms / 2) + INERTIA_COMPENSATION_MS;
+        int64_t center_turn_ms = (elapsed_ms / 2) + cfg.inertia_compensation_ms;
         printf("[1C] Fim do alvo (largura=%lld ms). Voltando %lld ms para centralizar.\n",
                elapsed_ms, center_turn_ms);
 
@@ -243,14 +309,14 @@ void loop() {
   }
 
   // ==========================================================================
-  // ESTADO 2: STALKING (Confirmação Estática)
+  // ESTADO 2: STALKING (Confirmação de Alvo)
   // ==========================================================================
   case STATE_STALKING: {
     motors_stop_all(&motors);
 
     // Captura a distância inicial D0 na primeira leitura válida após centralizar
     if (stalking_d0 < 0) {
-      if (is_target_visible(distance, DIST_LOST_MIN_CM)) {
+      if (is_target_visible(distance, cfg.dist_lost_min_cm)) {
         stalking_d0 = distance;
         printf("[STALKING] D0 registrado = %d cm.\n", stalking_d0);
       } else if ((now_ms - state_start_ms) > 200) {
@@ -261,15 +327,15 @@ void loop() {
     }
 
     // Valida se o alvo sumiu ou variou além da tolerância (+-3 cm)
-    if (distance < 0 || distance > DIST_LOST_MIN_CM ||
-        abs(distance - stalking_d0) > STALKING_TOLERANCE_CM) {
+    if (distance < 0 || distance > cfg.dist_lost_min_cm ||
+        abs(distance - stalking_d0) > cfg.stalking_tolerance_cm) {
       printf("[STALKING] Alvo instavel ou perdido (dist=%d, D0=%d). Voltando para SEARCHING.\n",
              distance, stalking_d0);
       enter_state(STATE_SEARCHING);
-    } else if ((now_ms - state_start_ms) >= STALKING_DURATION_MS) {
+    } else if ((now_ms - state_start_ms) >= cfg.stalking_duration_ms) {
       printf("[STALKING -> CREEPING] Alvo estavel confirmado!\n");
       creeping_start_dist = distance;
-      drive_both(MOTOR_DIRECTION_FORWARD, CREEPING_SPEED);
+      drive_both(MOTOR_DIRECTION_FORWARD, cfg.creeping_speed);
       enter_state(STATE_CREEPING);
     }
     break;
@@ -279,14 +345,18 @@ void loop() {
   // ESTADO 3: CREEPING (Aproximação Lenta e Trava de Alvo)
   // ==========================================================================
   case STATE_CREEPING: {
-    if (distance < 0 || distance > DIST_LOST_MIN_CM) {
+    if (distance < 0 || distance > cfg.dist_lost_min_cm) {
       printf("[CREEPING] Alvo perdido durante aproximacao. Voltando para SEARCHING.\n");
       motors_stop_all(&motors);
       enter_state(STATE_SEARCHING);
-    } else if ((now_ms - state_start_ms) >= CREEPING_DURATION_MS) {
+    } else if ((now_ms - state_start_ms) >= cfg.creeping_duration_ms) {
       // Ao fim dos 0,6s, valida se segue visível e mais perto (ou já encostando <= 10cm)
-      if (is_target_visible(distance, DIST_DETECT_MAX_CM) &&
-          (distance < creeping_start_dist || distance <= 10)) {
+      // No Hunter exige aproximação real; no Gladiator aceita distância estável ou menor
+      bool target_locked = (current_mode == MODE_GLADIATOR)
+                             ? (distance <= creeping_start_dist + 5)
+                             : (distance < creeping_start_dist || distance <= 10);
+
+      if (is_target_visible(distance, cfg.dist_detect_max_cm) && target_locked) {
         printf("[CREEPING -> CHARGING] Alvo travado a %d cm! Ataque maximo!\n", distance);
         drive_both(MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_75);
         enter_state(STATE_CHARGING);
@@ -301,14 +371,14 @@ void loop() {
   }
 
   // ==========================================================================
-  // ESTADO 4: CHARGING (Investida em 100% ignorando o ultrassônico)
+  // ESTADO 4: CHARGING (Investida ignorando o ultrassônico)
   // ==========================================================================
   case STATE_CHARGING: {
     // A saída normal ocorre pela interrupção global do LDR ao chegar na borda.
     // Aqui tratamos apenas o timeout de segurança caso a garrafa escape para o lado.
-    if ((now_ms - state_start_ms) >= CHARGING_TIMEOUT_MS) {
-      printf("[CHARGING] Timeout de %d ms sem achar borda. Voltando para SEARCHING.\n",
-             CHARGING_TIMEOUT_MS);
+    if ((now_ms - state_start_ms) >= cfg.charging_timeout_ms) {
+      printf("[CHARGING] Timeout de %lld ms sem achar borda. Voltando para SEARCHING.\n",
+             cfg.charging_timeout_ms);
       motors_stop_all(&motors);
       enter_state(STATE_SEARCHING);
     }
