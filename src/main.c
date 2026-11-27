@@ -54,22 +54,15 @@ RobotMode current_mode = MODE_HUNTER;
 #define LOOP_DELAY 64
 #define STARTUP_DELAY 5000
 
-// Sensor LDR (1 = faixa branca / nível alto; troque para 0 se for ativo-baixo)
+// Sensor LDR
 #define LDR_WHITE 0
 #define LDR_TRIGGER_COUNT 3
 
 // Limites de distância do ultrassônico (cm)
 #define DIST_JUMP_THRESHOLD_CM 15
-// #define DIST_DETECT_MAX_CM 55
-// #define DIST_LOST_MIN_CM 60
-// #define STALKING_TOLERANCE_CM 3
 
 // Tempos dos estados (ms)
 #define SEARCH_MAX_SWEEP_MS 1500
-// #define INERTIA_COMPENSATION_MS 64 // Ajuste fino para mirar no centro compensando a inércia
-// #define STALKING_DURATION_MS 800   // Tempo parado confirmando o alvo (0,8 a 1,0 s)
-// #define CREEPING_DURATION_MS 300   // Tempo avançando devagar (0,6 s)
-// #define CHARGING_TIMEOUT_MS 500   // Limite de segurança empurrando (2,5 s)
 
 // Parâmetros do Retreat (fuga da borda)
 #define RETREAT_PULSE_MS 150     // Cada pulso de ré
@@ -234,12 +227,12 @@ void loop() {
     ldr_white_count = 0;
   }
 
-  // if (ldr_white_count >= LDR_TRIGGER_COUNT && current_state != STATE_RETREAT) {
-  //   printf("[GLOBAL] Borda branca detectada %dx! Abortando para RETREAT.\n", ldr_white_count);
-  //   motors_stop_all(&motors);
-  //   ldr_white_count = 0;
-  //   enter_state(STATE_RETREAT);
-  // }
+  if (ldr_white_count >= LDR_TRIGGER_COUNT && current_state != STATE_RETREAT) {
+    printf("[GLOBAL] Borda branca detectada %dx! Abortando para RETREAT.\n", ldr_white_count);
+    motors_stop_all(&motors);
+    ldr_white_count = 0;
+    enter_state(STATE_RETREAT);
+  }
 
   // Durante o Charging e o Retreat, ignoramos o ultrassônico (zona cega de 2-3 cm)
   int distance = -1;
