@@ -1,19 +1,22 @@
-// gpio_set_direction, gpio_set_level
+// Controle de pinos digitais (gpio_set_direction, gpio_set_level)
 #include "driver/gpio.h"
 
-// LEDC PWM
+// Controle de PWM por hardware (LEDC)
 #include "driver/ledc.h"
 
-// pdMS_TO_TICKS
+// Temporizadores e tarefas do FreeRTOS (pdMS_TO_TICKS, vTaskDelay)
 #include "freertos/FreeRTOS.h"
-
-// vTaskDelay
 #include "freertos/task.h"
 
-// printf
+// Funções matemáticas, como atan2f() para cálculo de ângulo no modo Gladiador
+#include <math.h>
+
+// Tipos booleanos, entrada/saída padrão e utilitários (printf, abs)
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+// Cronômetro de alta resolução do ESP32 (esp_timer_get_time)
 #include "esp_timer.h"
 
 // system components
@@ -139,18 +142,18 @@ int creeping_start_dist = -1;
 // Carrega os parâmetros do modo selecionado na variável current_mode
 static void load_mode_config(RobotMode mode) {
   if (mode == MODE_HUNTER) {
-    cfg.dist_detect_max_cm = 75;
-    cfg.dist_lost_min_cm = 75;
+    cfg.dist_detect_max_cm = 55;
+    cfg.dist_lost_min_cm = 60;
     cfg.stalking_tolerance_cm = 3;
     cfg.inertia_compensation_ms = 64;
     cfg.stalking_duration_ms = 800;
     cfg.creeping_duration_ms = 300;
-    cfg.charging_timeout_ms = 500;
+    cfg.charging_timeout_ms = 600;
     cfg.creeping_speed = MOTOR_SPEED_25;
     cfg.charging_speed = MOTOR_SPEED_75;
     cfg.measure_target_width = true;
   } else { // MODE_GLADIATOR
-    cfg.dist_detect_max_cm = 75;
+    cfg.dist_detect_max_cm = 65;
     cfg.dist_lost_min_cm = 75;
     cfg.stalking_tolerance_cm = 5;
     cfg.inertia_compensation_ms = 40;
@@ -266,11 +269,18 @@ void loop() {
           last_valid_dist = distance;
           search_substate = SEARCH_MEASURING;
         } else {
-          // Modo Gladiator: trava imediatamente no oponente sem atravessá-lo
-          printf("[1A -> STALKING] Oponente detectado a %d cm! Travando mira.\n", distance);
-          motors_stop_all(&motors);
-          set_movement(&motors, MOVE_SPIN_COUNTERCLOCKWISE);
-          vTaskDelay(pdMS_TO_TICKS(cfg.inertia_compensation_ms));
+          // Modo Gladiator: estima o ângulo até o centro de um alvo de 10 cm (raio = 5 cm)
+          int effective_dist = (distance < 8) ? 8 : distance; // Evita giro exagerado se estiver colado
+          float angle_deg = atan2f(5.0f, (float)effective_dist) * (180.0f / 3.14159265f);
+          
+          // Converte graus para ms usando a mesma referência de giro do robô (~3,33 ms/grau)
+          int64_t extra_turn_ms = (int64_t)(angle_deg * (TURN_135_DEG_MS / 135.0f));
+
+          printf("[1A -> STALKING] Oponente a %d cm. Girando +%lld ms (%.1f graus) para o centro.\n",
+                 distance, extra_turn_ms, angle_deg);
+
+          set_movement(&motors, MOVE_SPIN_CLOCKWISE);
+          vTaskDelay(pdMS_TO_TICKS(extra_turn_ms));
           motors_stop_all(&motors);
           enter_state(STATE_STALKING);
         }
@@ -358,7 +368,7 @@ void loop() {
 
       if (is_target_visible(distance, cfg.dist_detect_max_cm) && target_locked) {
         printf("[CREEPING -> CHARGING] Alvo travado a %d cm! Ataque maximo!\n", distance);
-        drive_both(MOTOR_DIRECTION_FORWARD, MOTOR_SPEED_75);
+        drive_both(MOTOR_DIRECTION_FORWARD, cfg.creeping_speed);
         enter_state(STATE_CHARGING);
       } else {
         printf("[CREEPING] Distancia nao diminuiu (ini=%d, fim=%d). Voltando para SEARCHING.\n",
